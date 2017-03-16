@@ -29,6 +29,8 @@ var markdown = require('./markdown');
 var allIds = {};
 var hrefs = {};
 
+var withHash = false
+
 function trim(text) {
   return text.replace(/^[\s\t\r\n]+|[\s\t\r\n]+$/g, '');
 }
@@ -103,8 +105,11 @@ function toMarkdown(element, context) {
         // opening the element
         switch (element['#name']) {
           case 'ref': {
-            var name = toMarkdown(element.$$)
-            return s + markdown.link(name, '#class-' + name, true);  
+            var name = toMarkdown(element.$$);
+            var linkDest = 'class-' + name;
+            if (withHash)
+              linkDest = '#' + linkDest;
+            return s + markdown.link(name, linkDest, true);  
             //return s + markdown.link(toMarkdown(element.$$), '#' + element.$.refid, true);            
           }
           case '__text__': s = element._; break;
@@ -125,7 +130,7 @@ function toMarkdown(element, context) {
               s = '> ';
             }
             else if (element.$.kind == 'return') {
-              s = '\n#### Returns\n'
+              s = '\n**Returns**: '
             }
             else if (element.$.kind == 'see') {
               s = '\n**See also**: '
@@ -320,7 +325,10 @@ module.exports = {
       }.bind(this));
     }
     
-    compound.proto = inline([compound.kind, ' ', markdown.link(inline(compound.name), '#' + compound.kind + "-" + compound.name, true)]);
+    var linkDest = compound.kind + "-" + compound.name
+    if (withHash)
+      linkDest = '#' + linkDest;
+    compound.proto = inline([compound.kind, ' ', markdown.link(inline(compound.name), linkDest, true)]);
     
     /*
     (compounddef.innerclass || []).forEach(function (innerclass) {
