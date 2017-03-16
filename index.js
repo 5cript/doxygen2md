@@ -44,6 +44,9 @@ module.exports = {
     lang: 'cpp',                /** Programming language **/
     directory: null,            /** location of the doxygen files **/
     anchors: true,              /** generate anchors for internal links **/
+    anchorGenerator: null,      /** a function to modify anchor names with. param1=name, param2=options**/
+    templatePath: __dirname,
+    writer: null,               /** A writer function (where to write the output to.) */
 
     'compound': {
       'members': {
@@ -83,21 +86,30 @@ module.exports = {
     });
 
     // Generate an anchor for internal links
-    handlebars.registerHelper('anchor', function(name) {
-      if (options.anchors) {
-        return '{#' + name + '}';
-      }
-      else {
-        return '';
-      }
-    });
+    if (options.anchorGenerator !== null && options.anchorGenerator !== undefined)
+    {
+      handlebars.registerHelper('anchor', function(name) {
+        options.anchorGenerator(name, options)
+      })
+    }
+    else
+    {
+      handlebars.registerHelper('anchor', function(name) {
+        if (options.anchors) {
+          return '{#' + name + '}';
+        }
+        else {
+          return '';
+        }
+      });
+    }
 
     //
     // Load the templates
     //
     var contents = [];
     var templates = {};
-    var templatesDirectory = path.join(__dirname, 'templates', options.lang);
+    var templatesDirectory = path.join(options.templatePath, options.lang);
     fs.readdirSync(templatesDirectory).forEach(function (filename) {
       var fullname = path.join(templatesDirectory, filename);
       var template = handlebars.compile(fs.readFileSync(fullname, 'utf8'), {
@@ -122,9 +134,14 @@ module.exports = {
         });
         contents.forEach(function (content) {
           if (content) {
-            process.stdout.write(content);
+            if (options.writer)
+              options.writer(content)
+            else
+              process.stdout.write(content);
           }
         });
+        if (options.cb)
+          options.cb()
       });
     });
   }

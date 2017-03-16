@@ -102,7 +102,11 @@ function toMarkdown(element, context) {
         
         // opening the element
         switch (element['#name']) {
-          case 'ref': return s + markdown.link(toMarkdown(element.$$), '#' + element.$.refid, true);            
+          case 'ref': {
+            var name = toMarkdown(element.$$)
+            return s + markdown.link(name, '#class-' + name, true);  
+            //return s + markdown.link(toMarkdown(element.$$), '#' + element.$.refid, true);            
+          }
           case '__text__': s = element._; break;
           case 'emphasis': s = '*'; break;
           case 'bold': s = '**'; break;
@@ -316,7 +320,7 @@ module.exports = {
       }.bind(this));
     }
     
-    compound.proto = inline([compound.kind, ' ', markdown.link(inline(compound.name), '#' + compound.refid, true)]);
+    compound.proto = inline([compound.kind, ' ', markdown.link(inline(compound.name), '#' + compound.kind + "-" + compound.name, true)]);
     
     /*
     (compounddef.innerclass || []).forEach(function (innerclass) {
